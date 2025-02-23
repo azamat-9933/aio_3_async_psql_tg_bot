@@ -60,3 +60,22 @@ async def get_language_of_user(session: AsyncSession,
     # Получаем результаты
     language = result.scalar()
     return language
+
+
+async def register_user(session: AsyncSession,
+                        chat_id: int,
+                        full_name: str,
+                        phone_number: str):
+    stmt = (
+        update(TgBotUser)
+        .where(TgBotUser.telegram_id == chat_id)  # Условие: находим пользователя по chat_id
+        .values(full_name=full_name,
+                phone=phone_number,
+                status=True) # Обновляем столбец language
+    )
+
+    # Выполняем запрос
+    await session.execute(stmt)
+
+    # Фиксируем изменения
+    await session.commit()
