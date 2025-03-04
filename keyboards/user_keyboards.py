@@ -44,3 +44,13 @@ async def generate_main_menu_buttons(language):
         builder.row(KeyboardButton(text="Leave feedback ✍🏻"))
 
     return builder.as_markup(resize_keyboard=True)
+
+
+async def generate_back_button(language):
+    builder = ReplyKeyboardBuilder()
+    if language == "ru":
+        builder.button(text="Назад ⬅")
+    elif language == "en":
+        builder.button(text="Back ⬅")
+
+    return builder.as_markup(resize_keyboard=True)

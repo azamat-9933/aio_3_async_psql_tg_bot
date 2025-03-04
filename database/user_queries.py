@@ -79,3 +79,13 @@ async def register_user(session: AsyncSession,
 
     # Фиксируем изменения
     await session.commit()
+
+async def get_user_full_name_phone_number(session, chat_id):
+    # Создаем запрос на получение full_name и phone_number пользователя по chat_id
+    stmt = select(TgBotUser.full_name, TgBotUser.phone).where(TgBotUser.telegram_id == chat_id)
+
+    # Выполняем запрос
+    result = await session.execute(stmt)
+    # Получаем результаты
+    full_name, phone = result.first()  # ('Azamat', '+998901139933)
+    return full_name, phone

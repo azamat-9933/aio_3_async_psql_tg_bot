@@ -33,6 +33,14 @@ Please choose the language 🌐</b>""",
         "en": f"""<b>Main menu ⚡
 Choose option ⬇</b>"""
     },
+"message_9": {
+        "ru": f"""<b>Оставьте ваш отзыв ✍🏻</b>""",
+        "en": f"""<b>Leave your feedback ✍🏻</b>"""
+    },
+"message_10": {
+        "ru": f"""<b>Спасибо за ваш отзыв ✌ Мы ценим ваше мнение 🙂</b>""",
+        "en": f"""<b>Thank you for your feedback ✌ We appreciate your opinion 🙂</b>"""
+    }
 }
 
 

@@ -6,14 +6,16 @@ from aiogram.types import ReplyKeyboardRemove
 from aiogram.types import CallbackQuery
 from aiogram.filters import CommandStart
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.util import await_only
 
 from keyboards.user_keyboards import *
 from database.user_queries import *
 from database.tables import engine
 from messages import messages
 from messages import generate_submit_message
-from states.registration_states import RegistrationStatesGroup
+from states.feedback_state import FeedbackStatesGroup
+from states.main_menu_state import MainMenuStatesGroup
+from states.registration_state import RegistrationStatesGroup
+from configs import FEEDBACK_CHANNEL
 
 user_router = Router()
 
@@ -39,7 +41,7 @@ async def start(message: Message, bot: Bot, state: FSMContext):
                 if user_status is False:
                     await start_registration(message, bot, state)
                 elif user_status is True:
-                    await main_menu(message, bot)
+                    await main_menu(message, bot, state)
 
             except:
                 await message.answer(text=messages["message_1"],
@@ -159,7 +161,7 @@ async def submit_registration(message: Message, bot: Bot, state: FSMContext):
         await start_registration(message, bot, state)
 
 
-async def main_menu(message: Message, bot: Bot):
+async def main_menu(message: Message, bot: Bot, state: FSMContext):
     chat_id = message.chat.id
 
     async with AsyncSessionLocal() as session:
@@ -169,3 +171,60 @@ async def main_menu(message: Message, bot: Bot):
     await bot.send_message(chat_id=chat_id,
                            text=messages["message_8"][language],
                            reply_markup=await generate_main_menu_buttons(language))
+
+    await state.set_state(MainMenuStatesGroup.main_menu)
+
+
+# ------------------------------------------------------------------------------------------------
+@user_router.message(MainMenuStatesGroup.main_menu)
+async def choose_option_main_menu(message: Message, bot: Bot, state: FSMContext):
+    if "✍🏻" in message.text:
+        await ask_for_feedback_from_user(message, bot, state)
+    elif "⚙" in message.text:
+        pass
+    elif "📚" in message.text:
+        pass
+
+
+# -----------------------------------------------------------------------------
+# FEEDBACK SECTION
+async def ask_for_feedback_from_user(message: Message, bot: Bot, state: FSMContext):
+    chat_id = message.chat.id
+
+    async with AsyncSessionLocal() as session:
+        language = await get_language_of_user(session,
+                                              chat_id=chat_id)
+
+    await bot.send_message(chat_id=chat_id,
+                           text=messages["message_9"][language],
+                           reply_markup=await generate_back_button(language))
+
+    await state.set_state(FeedbackStatesGroup.ask_feedback)
+
+
+@user_router.message(FeedbackStatesGroup.ask_feedback)
+async def receive_feedback(message: Message, bot: Bot, state: FSMContext):
+    if message.text == "Назад ⬅" or message.text == "Back ⬅":
+        await main_menu(message, bot, state)
+    else:
+        chat_id = message.chat.id
+        feedback = message.text
+
+        async with AsyncSessionLocal() as session:
+            language = await get_language_of_user(session,
+                                                  chat_id=chat_id)
+
+            user_data = await get_user_full_name_phone_number(session, chat_id)
+
+        await bot.send_message(FEEDBACK_CHANNEL,
+                               text=f"""Отзыв от пользователя 🔔🔔🔔
+\nИмя: {user_data[0]}
+\nТелефон: {user_data[1]}
+\nОтзыв:
+{feedback}""")
+
+        await bot.send_message(chat_id=chat_id,
+                               text=messages["message_10"][language])
+
+        await main_menu(message, bot, state)
+
